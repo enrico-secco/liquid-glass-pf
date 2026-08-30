@@ -42,10 +42,10 @@ export const site = {
     { label: "About", href: "#about" },
     { label: "Contact", href: "#contact" },
   ],
-  // TODO: replace with your real profile URLs.
   socials: [
+    // TODO: replace with your real LinkedIn profile URL.
     { label: "LinkedIn", href: "https://www.linkedin.com/" },
-    { label: "GitHub", href: "https://github.com/" },
+    { label: "GitHub", href: "https://github.com/enrico-secco" },
   ],
 };
 
