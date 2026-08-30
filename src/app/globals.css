@@ -1,26 +1,438 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   Design tokens — every visual value in the site flows from here.
+   Spec: PORTFOLIO_SPEC.md §6.1
+--------------------------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #050506;
+  --fg: #f2f2f4;
+  --muted: rgba(242, 242, 244, 0.58);
+  --faint: rgba(242, 242, 244, 0.32);
+
+  /* One accent. Warm light — "light passing through the interface". */
+  --accent: #e3b271;
+  --accent-soft: rgba(227, 178, 113, 0.12);
+
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-bg-strong: rgba(255, 255, 255, 0.1);
+  --glass-blur: 24px;
+  --glass-saturate: 180%;
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.25);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+
+  --radius-capsule: 999px;
+  --radius-card: 28px;
+
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --motion-fast: 200ms;
+  --motion-medium: 400ms;
+  --motion-slow: 800ms;
+
+  /* Written by the single shared rAF loop (Runtime.tsx).
+     --px/--py: normalized pointer, -1..1, lerp 0.08 (ambient layer)
+     --cx/--cy: raw-ish pointer in px, lerp 0.15 (cursor layer) */
+  --px: 0;
+  --py: 0;
+  --cx: -100px;
+  --cy: -100px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
+/* Mobile: lighter material for performance. Spec §6.2 / §11 */
+@media (max-width: 768px) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --glass-blur: 16px;
   }
 }
 
+html {
+  color-scheme: dark;
+  background: var(--bg);
+  scroll-padding-top: 7rem;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family:
+    -apple-system,
+    "SF Pro Display",
+    var(--font-inter),
+    sans-serif;
+  letter-spacing: -0.01em;
+  overflow-x: clip;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ---------------------------------------------------------------------------
+   Variant B — Liquid Glass × Neo-Memphis (MEMPHIS_SPEC.md).
+   The same material system re-tokenized for a light, vivid world: the
+   glass classes below read these vars, so the identical components render
+   a different material simply by living inside .memphis.
+--------------------------------------------------------------------------- */
+.memphis {
+  --bg: #f2efe6; /* warm cream — dominant neutral */
+  --fg: #1b1d2e; /* ink navy */
+  --muted: rgba(27, 29, 46, 0.64);
+  --faint: rgba(27, 29, 46, 0.4);
+  --accent: #ff5d4d; /* coral — primary accent */
+  --accent-soft: rgba(255, 93, 77, 0.14);
+  --m-blue: #2b5cff;
+  --m-yellow: #ffc531;
+  --m-teal: #21b39b;
+  --m-pink: #ff9ec2;
+
+  --glass-bg: rgba(255, 255, 255, 0.38);
+  --glass-bg-strong: rgba(255, 255, 255, 0.58);
+  --glass-border: rgba(27, 29, 46, 0.1);
+  --glass-highlight: rgba(255, 255, 255, 0.85);
+  --glass-shadow: 0 16px 44px rgba(27, 29, 46, 0.13);
+
+  color: var(--fg);
+  background: var(--bg);
+  color-scheme: light;
+}
+
+/* Glass 03 — dense tier for important floating panels (spec §07). */
+.memphis .glass-dense {
+  --glass-bg: rgba(255, 255, 255, 0.62);
+  --glass-blur: 32px;
+}
+
+.memphis .chip {
+  background: rgba(27, 29, 46, 0.05);
+  border-color: rgba(27, 29, 46, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Memphis environmental motion — slower than UI, faster than variant A's
+   ambient fog. Layered speeds create depth (spec §10). */
+@keyframes m-drift {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(2%, -3%, 0) rotate(4deg);
+  }
+  100% {
+    transform: translate3d(-2%, 2%, 0) rotate(-3deg);
+  }
+}
+@keyframes m-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes m-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-16px);
+  }
+}
+.m-drift {
+  animation: m-drift 28s ease-in-out infinite alternate;
+}
+.m-spin {
+  animation: m-spin 52s linear infinite;
+}
+.m-bob {
+  animation: m-bob 11s ease-in-out infinite;
+}
+.m-bob-late {
+  animation: m-bob 13s ease-in-out 1.8s infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   Glass material. Spec §6 — blur is always paired with saturate.
+   Glare position (--gx/--gy) is spring-driven per surface (GlassSurface).
+   Inside @layer components so Tailwind utilities (lg:hidden, p-*, text-*)
+   can override these classes — unlayered CSS would beat every utility.
+--------------------------------------------------------------------------- */
+@layer components {
+.glass {
+  position: relative;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    var(--glass-shadow);
+}
+
+.glass-shallow {
+  --glass-blur: 12px;
+  --glass-bg: rgba(255, 255, 255, 0.04);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass {
+    background: rgba(20, 20, 22, 0.9);
+  }
+}
+
+/* Refraction tier — html.lens is set only on Chromium desktop, where
+   backdrop displacement actually renders. Blur runs BEFORE the lens so
+   the edge ring bends the already-frosted backdrop; slightly lower blur
+   keeps the bending legible. Other engines keep the frosted tier. */
+.lens .glass {
+  backdrop-filter: blur(14px) saturate(var(--glass-saturate)) url(#lg-lens);
+}
+.lens .glass-shallow {
+  backdrop-filter: blur(10px) saturate(var(--glass-saturate)) url(#lg-lens);
+}
+
+/* Hint of chromatic dispersion at opposing edges (lens tier only). */
+.lens .glass::before {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 1.5px 3px 10px -3px rgba(255, 255, 255, 0.2),
+    inset -2px -3px 10px -3px rgba(255, 255, 255, 0.07),
+    inset 0 -10px 20px -10px rgba(0, 0, 0, 0.35),
+    inset 3px 0 4px -3px rgba(140, 200, 255, 0.14),
+    inset -3px 0 4px -3px rgba(255, 190, 130, 0.14);
+}
+
+/* Press densify — under pressure the material compresses: denser fill,
+   tighter shadow. Pairs with the springs' scale-down. */
+a.glass:active,
+button.glass:active {
+  background: var(--glass-bg-strong);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+/* Lens ring — the edge-refraction illusion of real Liquid Glass: a bright
+   inner bevel toward the light, a dark falloff at the bottom edge. The
+   center stays optically clear. */
+.glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 1.5px 3px 10px -3px rgba(255, 255, 255, 0.2),
+    inset -2px -3px 10px -3px rgba(255, 255, 255, 0.07),
+    inset 0 -10px 20px -10px rgba(0, 0, 0, 0.35);
+}
+
+/* Chip — the small-surface tier of the material vocabulary (tags, badges,
+   inline controls). Translucent fill without backdrop-filter: visually
+   identical over the dark ground, zero compositor cost, so chips never
+   count against the backdrop-filter budget. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  border-radius: var(--radius-capsule);
+  padding: 0.35em 0.9em;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+} /* end @layer components */
+
+
+/* Specular glare — a light source moving across the surface. */
+.glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    140px circle at var(--gx, 50%) var(--gy, -30%),
+    rgba(255, 255, 255, 0.14),
+    transparent 70%
+  );
+  opacity: var(--glare, 0);
+  transition: opacity var(--motion-medium) var(--ease);
+}
+
+/* ---------------------------------------------------------------------------
+   Film grain — one fixed layer for the whole page, kills banding. Spec §5.1
+--------------------------------------------------------------------------- */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.03;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+/* ---------------------------------------------------------------------------
+   Projects — hovering one quiets its siblings. Spec §8.3
+--------------------------------------------------------------------------- */
+.work-list .project {
+  transition: opacity var(--motion-medium) var(--ease);
+}
+.work-list:has(.project:hover) .project:not(:hover) {
+  opacity: 0.55;
+}
+
+/* Engineering — technology names react subtly. Spec §8.5 */
+.tech {
+  color: var(--muted);
+  transition:
+    color 300ms var(--ease),
+    transform 300ms var(--ease);
+}
+.tech:hover {
+  color: var(--fg);
+  transform: translateX(6px);
+}
+.tech:hover::before {
+  opacity: 1;
+}
+.tech::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  margin-right: 0.75rem;
+  vertical-align: middle;
+  opacity: 0;
+  transition: opacity 300ms var(--ease);
+}
+
+/* Contact — liquid underline growing from center. Spec §8.6 */
+.email-link {
+  position: relative;
+  display: inline-block;
+}
+.email-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.04em;
+  height: 0.045em;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 600ms var(--ease);
+}
+.email-link:hover::after,
+.email-link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* Hero scroll indicator */
+@keyframes pulse-line {
+  0%,
+  100% {
+    transform: scaleY(0.25);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+.scroll-line {
+  transform-origin: top;
+  animation: pulse-line 2s var(--ease) infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   Ambient background drift — 20–30s cycles, barely perceptible. Spec §5.1
+--------------------------------------------------------------------------- */
+@keyframes drift-a {
+  0% {
+    transform: translate3d(-4%, -2%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(5%, 4%, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-2%, 3%, 0) scale(0.97);
+  }
+}
+@keyframes drift-b {
+  0% {
+    transform: translate3d(3%, 2%, 0) scale(1.05);
+  }
+  50% {
+    transform: translate3d(-5%, -3%, 0) scale(0.95);
+  }
+  100% {
+    transform: translate3d(2%, -4%, 0) scale(1.02);
+  }
+}
+@keyframes drift-c {
+  0% {
+    transform: translate3d(0, 3%, 0) scale(0.98);
+  }
+  50% {
+    transform: translate3d(-3%, -2%, 0) scale(1.06);
+  }
+  100% {
+    transform: translate3d(4%, 1%, 0) scale(1);
+  }
+}
+.ambient-a {
+  animation: drift-a 26s ease-in-out infinite alternate;
+}
+.ambient-b {
+  animation: drift-b 34s ease-in-out infinite alternate;
+}
+.ambient-c {
+  animation: drift-c 22s ease-in-out infinite alternate;
+}
+
+/* ---------------------------------------------------------------------------
+   Reduced motion — the site must remain beautiful without animation. Spec §7.4
+--------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .ambient-a,
+  .ambient-b,
+  .ambient-c,
+  .scroll-line,
+  .m-drift,
+  .m-spin,
+  .m-bob,
+  .m-bob-late {
+    animation: none !important;
+  }
+  .glass::after {
+    opacity: 0 !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
 }
