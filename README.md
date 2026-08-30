@@ -3,8 +3,7 @@
 Personal portfolio of **Enrico Secco** — Frontend Software Engineer — built as a study in
 **material design systems**: the same content, the same glass physics, two opposite worlds.
 
-<!-- TODO: add the live URL after connecting Vercel -->
-<!-- 🔗 Live: https://... -->
+🔗 **Live:** [liquid-glass-pf.vercel.app](https://liquid-glass-pf.vercel.app) · [/memphis variant](https://liquid-glass-pf.vercel.app/memphis)
 
 | Variant A — Liquid Glass | Variant B — Neo-Memphis |
 | --- | --- |

@@ -32,8 +32,8 @@ export const site = {
   statement:
     "Building interfaces where engineering, performance and product experience meet.",
   email: "enricoluizsecco@gmail.com",
-  // TODO: set the real production domain once deployed (used by SEO files).
-  url: "https://enricosecco.dev",
+  // Production domain — sitemap, robots, canonical and Open Graph derive from it.
+  url: "https://liquid-glass-pf.vercel.app",
   description:
     "Frontend Engineer with 5+ years of experience in React, TypeScript and GraphQL — driving frontend modernization, leading technical initiatives and contributing to scalable architectures for business-critical systems.",
   nav: [
