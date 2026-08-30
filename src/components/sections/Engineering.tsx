@@ -14,7 +14,8 @@ export default function Engineering() {
         <div className="mt-16 grid gap-x-16 gap-y-14 sm:grid-cols-2">
           {engineering.map((group, i) => (
             <Reveal key={group.category} delay={i * 0.08}>
-              <div>
+              {/* Staggered columns break the mechanical grid */}
+              <div className={["", "lg:mt-12", "lg:mt-2", "lg:mt-16"][i % 4]}>
                 <h3 className="font-mono text-[12px] uppercase tracking-[0.2em] text-(--faint)">
                   {group.category}
                 </h3>

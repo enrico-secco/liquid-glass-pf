@@ -40,10 +40,9 @@ function MaskedLine({
 }
 
 /**
- * The floating glass composition (spec §8.2 hero elements — one of the few
- * places heavy glass is allowed on content). Two panels at different
- * parallax depths, leaning slightly away from / toward the pointer, so the
- * stack reads as physically layered glass.
+ * The floating glass composition. Panels sit at slightly different angles
+ * and parallax depths — placed, not templated — and a small circular lens
+ * floats above them: glass whose only job is to bend the environment.
  */
 function HeroGlassStack() {
   const reduced = useReducedMotion();
@@ -66,15 +65,31 @@ function HeroGlassStack() {
         className="absolute -inset-16 -z-10"
         style={{
           background:
-            "radial-gradient(50% 50% at 42% 38%, rgba(227,178,113,0.16), transparent 70%), radial-gradient(45% 45% at 72% 78%, rgba(150,170,200,0.11), transparent 70%)",
+            "radial-gradient(50% 50% at 42% 38%, rgba(227,178,113,0.16), transparent 70%), radial-gradient(45% 45% at 72% 78%, rgba(96,124,220,0.13), transparent 70%)",
         }}
       />
 
-      {/* Back panel — deeper layer, moves opposite the pointer */}
+      {/* Circular lens — pure material, floating nearest to the viewer */}
+      <div
+        className="absolute -right-7 -top-9 z-10"
+        style={{
+          transform:
+            "translate3d(calc(var(--px) * 20px), calc(var(--py) * 20px), 0)",
+        }}
+      >
+        <GlassSurface
+          className="h-20 w-20"
+          style={{ borderRadius: "999px" }}
+        >
+          <span className="sr-only">decorative lens</span>
+        </GlassSurface>
+      </div>
+
+      {/* Back panel — deeper layer, leans away from the pointer */}
       <div
         style={{
           transform:
-            "translate3d(calc(var(--px) * -8px), calc(var(--py) * -8px), 0)",
+            "rotate(1.5deg) translate3d(calc(var(--px) * -8px), calc(var(--py) * -8px), 0)",
         }}
       >
         <GlassSurface
@@ -128,7 +143,7 @@ function HeroGlassStack() {
         className="absolute -bottom-8 -left-14"
         style={{
           transform:
-            "translate3d(calc(var(--px) * 14px), calc(var(--py) * 14px), 0)",
+            "rotate(-2deg) translate3d(calc(var(--px) * 14px), calc(var(--py) * 14px), 0)",
         }}
       >
         <GlassSurface
@@ -174,7 +189,7 @@ export default function Hero() {
     <section
       ref={ref}
       id="top"
-      className="relative flex min-h-[92vh] flex-col justify-center px-6 pt-28 sm:px-12 lg:px-24 lg:pt-0"
+      className="relative flex min-h-[92vh] flex-col justify-center px-6 pt-28 sm:px-12 lg:px-24 lg:pt-24"
     >
       {/* Hero light — a soft glow that leans toward the pointer. */}
       <div
@@ -189,77 +204,83 @@ export default function Hero() {
       />
 
       <motion.div
-        className="mx-auto grid w-full max-w-6xl items-center gap-16 lg:grid-cols-12"
+        className="mx-auto w-full max-w-6xl"
         style={
           reduced
             ? undefined
             : { y: contentY, opacity: contentOpacity, filter: contentBlur }
         }
       >
-        <div className="lg:col-span-7">
-          <MaskedLine delay={0.15}>
-            <span className="font-mono text-[13px] tracking-[0.2em] text-(--muted) uppercase">
-              {site.role}
-            </span>
+        <MaskedLine delay={0.15}>
+          <span className="font-mono text-[13px] tracking-[0.2em] text-(--muted) uppercase">
+            {site.role}
+          </span>
+        </MaskedLine>
+
+        {/* Editorial stagger: the second line steps inward — composed,
+            not centered, not a template. */}
+        <h1 className="mt-6 text-[clamp(3rem,8.5vw,7.25rem)] font-semibold leading-[0.95] tracking-[-0.04em]">
+          <MaskedLine delay={0.24}>{site.name.split(" ")[0]}</MaskedLine>
+          <MaskedLine delay={0.33} className="lg:pl-[8%]">
+            <span className="text-(--muted)">{site.name.split(" ")[1]}</span>
           </MaskedLine>
+        </h1>
 
-          <h1 className="mt-5 text-[clamp(3rem,8vw,6.5rem)] font-semibold leading-[0.98] tracking-[-0.035em]">
-            <MaskedLine delay={0.26}>{site.name.split(" ")[0]}</MaskedLine>
-            <MaskedLine delay={0.35}>
-              <span className="text-(--muted)">{site.name.split(" ")[1]}</span>
-            </MaskedLine>
-          </h1>
-
-          <MaskedLine delay={0.44} className="mt-8 max-w-xl">
-            <span className="text-lg leading-relaxed text-(--muted) sm:text-xl">
-              {site.statement}
-            </span>
-          </MaskedLine>
-
-          <motion.div
-            className="relative mt-12 flex items-center gap-8"
-            initial={reduced ? { opacity: 0 } : { opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.72, ease: [...EASE] }}
-          >
-            {/* Backlight for the primary CTA — the page's most interactive
-                glass gets its own light source, like the nav and the card. */}
-            <div
-              aria-hidden
-              className="absolute -left-10 -top-10 -z-10 h-36 w-72"
-              style={{
-                background:
-                  "radial-gradient(closest-side, rgba(227,178,113,0.13), transparent 70%)",
-              }}
-            />
-            <MagneticButton
-              href="#work"
-              glass
-              className="px-7 py-3.5 text-sm font-medium"
-            >
-              View selected work
-              <span aria-hidden className="text-(--accent)">
-                ↓
+        <div className="mt-12 grid gap-12 lg:grid-cols-12 lg:items-start">
+          <div className="lg:col-span-5">
+            <MaskedLine delay={0.44} className="max-w-md">
+              <span className="text-lg leading-relaxed text-(--muted) sm:text-xl">
+                {site.statement}
               </span>
-            </MagneticButton>
-            <a
-              href="#contact"
-              className="text-sm text-(--muted) transition-colors duration-300 hover:text-(--fg)"
+            </MaskedLine>
+
+            <motion.div
+              className="relative mt-10 flex items-center gap-8"
+              initial={reduced ? { opacity: 0 } : { opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.72, ease: [...EASE] }}
             >
-              Get in touch
-            </a>
-          </motion.div>
+              {/* Backlight for the primary CTA — the page's most interactive
+                  glass gets its own light source, like the nav and the card. */}
+              <div
+                aria-hidden
+                className="absolute -left-10 -top-10 -z-10 h-36 w-72"
+                style={{
+                  background:
+                    "radial-gradient(closest-side, rgba(227,178,113,0.13), transparent 70%)",
+                }}
+              />
+              <MagneticButton
+                href="#work"
+                glass
+                className="px-7 py-3.5 text-sm font-medium"
+              >
+                View selected work
+                <span aria-hidden className="text-(--accent)">
+                  ↓
+                </span>
+              </MagneticButton>
+              <a
+                href="#contact"
+                className="text-sm text-(--muted) transition-colors duration-300 hover:text-(--fg)"
+              >
+                Get in touch
+              </a>
+            </motion.div>
+          </div>
 
-        </div>
-
-        <div className="lg:col-span-5 lg:justify-self-end">
-          <HeroGlassStack />
+          {/* Lifted into the name's zone: the diagonal counterweight —
+              type top-left, glass mid-right — instead of sinking below */}
+          <div className="lg:col-span-5 lg:col-start-8 lg:-mt-48 lg:justify-self-end">
+            <HeroGlassStack />
+          </div>
         </div>
       </motion.div>
 
+      {/* Off-center by intent: the indicator sits on the content's left edge */}
       <motion.div
         aria-hidden
-        className="absolute bottom-10 left-1/2 -translate-x-1/2"
+        className="absolute bottom-10 left-6 sm:left-12 lg:left-24"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, delay: 1.4 }}

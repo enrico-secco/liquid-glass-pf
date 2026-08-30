@@ -1,6 +1,5 @@
 import { site } from "@/content/content";
 import Reveal from "@/components/primitives/Reveal";
-import MagneticButton from "@/components/primitives/MagneticButton";
 
 export default function Contact() {
   return (
@@ -40,15 +39,16 @@ export default function Contact() {
           <p className="text-[13px] text-(--faint)">
             © {new Date().getFullYear()} {site.name}
           </p>
+          {/* Plain links — magnetism is reserved for the primary CTA */}
           <nav className="flex items-center gap-2">
             {site.socials.map((social) => (
-              <MagneticButton
+              <a
                 key={social.label}
                 href={social.href}
                 className="px-3 py-1.5 font-mono text-[12px] text-(--muted) transition-colors duration-300 hover:text-(--fg)"
               >
                 {social.label}
-              </MagneticButton>
+              </a>
             ))}
           </nav>
         </div>

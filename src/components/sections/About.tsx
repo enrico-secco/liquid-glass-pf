@@ -8,7 +8,7 @@ export default function About() {
       <div className="mx-auto max-w-6xl">
         <SectionHeading index="04" title="About" />
         <div className="mt-16 grid gap-12 lg:grid-cols-12">
-          <Reveal className="lg:col-span-7">
+          <Reveal className="lg:col-span-7 lg:pl-[8%]">
             <p className="text-[clamp(1.5rem,2.8vw,2.25rem)] font-medium leading-snug tracking-[-0.02em]">
               {about.lead}
             </p>

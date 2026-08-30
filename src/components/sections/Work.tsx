@@ -4,21 +4,48 @@ import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { projects, type Project } from "@/content/content";
 import Reveal, { EASE } from "@/components/primitives/Reveal";
+import GlassSurface from "@/components/primitives/GlassSurface";
 import SectionHeading from "@/components/sections/SectionHeading";
+
+/** Oversized ghost numeral — compositional, almost invisible, breaks the
+ *  card-grid sameness. */
+function GhostIndex({
+  children,
+  className,
+}: {
+  children: string;
+  className?: string;
+}) {
+  return (
+    <span
+      aria-hidden
+      className={`pointer-events-none absolute select-none font-mono text-[clamp(6rem,15vw,12rem)] font-bold leading-none text-white/4 ${className ?? ""}`}
+    >
+      {children}
+    </span>
+  );
+}
 
 /**
  * Abstract procedural visual per project (no raster images). Each layout
  * variant gets its own composition so no two projects read the same.
  * Replace with real product imagery when available.
  */
-function ProjectVisual({ project }: { project: Project }) {
+function ProjectVisual({
+  project,
+  aspect,
+}: {
+  project: Project;
+  aspect?: string;
+}) {
   return (
     <div
       data-cursor="View project →"
       className="group relative w-full overflow-hidden"
       style={{
         borderRadius: "var(--radius-card)",
-        aspectRatio: project.layout === "full" ? "16 / 8" : "4 / 3",
+        aspectRatio:
+          aspect ?? (project.layout === "full" ? "16 / 8" : "4 / 3"),
         border: "1px solid rgba(255,255,255,0.08)",
       }}
     >
@@ -43,7 +70,7 @@ function ProjectVisual({ project }: { project: Project }) {
           className="absolute -bottom-[18%] -right-[6%] h-[55%] w-[38%] rounded-full"
           style={{
             background:
-              "radial-gradient(closest-side, rgba(150,170,200,0.10), transparent 70%)",
+              "radial-gradient(closest-side, rgba(96,124,220,0.11), transparent 70%)",
           }}
         />
         {/* Composition varies by layout variant */}
@@ -67,7 +94,7 @@ function ProjectVisual({ project }: { project: Project }) {
               className="absolute right-[-15%] top-[-20%] h-[90%] w-[70%] rounded-full opacity-50"
               style={{
                 background:
-                  "radial-gradient(closest-side, rgba(168,178,196,0.14), transparent 70%)",
+                  "radial-gradient(closest-side, rgba(96,124,220,0.15), transparent 70%)",
               }}
             />
             <div className="absolute left-1/2 top-1/2 h-[85%] w-[85%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/6" />
@@ -107,13 +134,12 @@ function ProjectVisual({ project }: { project: Project }) {
         }}
       />
       {/* Permanent glass-over-content crossing: the index chip samples the
-          visual's glow — the material is always at work, like iOS chrome
-          over scrolling content. */}
+          visual's glow — the material is always at work. */}
       <div className="glass absolute left-5 top-5 rounded-full px-4 py-2 font-mono text-[12px]">
         {project.index}
         <span className="ml-2 text-(--faint)">{project.role}</span>
       </div>
-      {/* Glass control materializes over the visual on hover (spec §8.3) */}
+      {/* Glass control materializes over the visual on hover */}
       <div
         className="glass absolute bottom-5 right-5 translate-y-2 rounded-full px-5 py-2.5 text-[13px] opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100"
         style={{ transitionTimingFunction: "var(--ease)" }}
@@ -127,8 +153,8 @@ function ProjectVisual({ project }: { project: Project }) {
   );
 }
 
-/** Progressive disclosure of the case study (spec §8.3). Exported for
- *  reuse by the Neo-Memphis variant. */
+/** Progressive disclosure of the case study. Exported for reuse by the
+ *  Neo-Memphis variant. */
 export function CaseStudy({ project }: { project: Project }) {
   const [open, setOpen] = useState(false);
   const reduced = useReducedMotion();
@@ -183,14 +209,25 @@ export function CaseStudy({ project }: { project: Project }) {
   );
 }
 
-function ProjectMeta({ project }: { project: Project }) {
+function ProjectMeta({
+  project,
+  titleClassName,
+}: {
+  project: Project;
+  titleClassName?: string;
+}) {
   return (
     <div>
       <div className="flex items-baseline gap-4">
         <span className="font-mono text-[13px] text-(--accent)">
           {project.index}
         </span>
-        <h3 className="text-2xl font-medium tracking-tight sm:text-3xl">
+        <h3
+          className={
+            titleClassName ??
+            "text-2xl font-medium tracking-tight sm:text-3xl"
+          }
+        >
           {project.title}
         </h3>
       </div>
@@ -211,45 +248,69 @@ function ProjectMeta({ project }: { project: Project }) {
   );
 }
 
+/**
+ * Three distinct compositions from one system (art direction revision):
+ * 01 — large visual with a floating glass metadata panel overlapping it;
+ * 02 — typography dominant, the visual offset and secondary;
+ * 03 — large visual field crossing the content grid, metadata beside it.
+ * Same hierarchy and content everywhere; only the treatment changes.
+ */
 export default function Work() {
   return (
     <section id="work" className="px-6 py-32 sm:px-12 lg:px-24 lg:py-44">
       <div className="mx-auto max-w-6xl">
         <SectionHeading index="01" title="Selected work" />
 
-        <div className="work-list mt-20 space-y-28 lg:space-y-40">
-          {projects.map((project, i) => (
+        <div className="work-list mt-20 space-y-28 lg:space-y-44">
+          {projects.map((project) => (
             <Reveal key={project.id} delay={0.05}>
-              <article className="project">
-                {project.layout === "full" ? (
-                  <div>
+              <article className="project relative">
+                {project.layout === "full" && (
+                  <div className="relative">
+                    <GhostIndex className="-top-[0.55em] right-0">
+                      {project.index}
+                    </GhostIndex>
                     <ProjectVisual project={project} />
-                    <div className="mt-10 lg:max-w-2xl">
-                      <ProjectMeta project={project} />
+                    {/* Floating glass metadata — overlaps the visual instead
+                        of sitting below it in a template row */}
+                    <div className="relative z-10 -mt-10 sm:ml-8 sm:max-w-xl lg:-mt-20 lg:ml-14">
+                      <GlassSurface
+                        className="p-7 sm:p-8"
+                        style={{ borderRadius: "var(--radius-card)" }}
+                      >
+                        <ProjectMeta project={project} />
+                      </GlassSurface>
                     </div>
                   </div>
-                ) : (
-                  <div
-                    className={`grid items-center gap-10 lg:grid-cols-12 lg:gap-16 ${
-                      i % 2 ? "" : ""
-                    }`}
-                  >
-                    <div
-                      className={`lg:col-span-7 ${
-                        project.layout === "split-reverse"
-                          ? "lg:order-2 lg:col-start-6"
-                          : ""
-                      }`}
-                    >
-                      <ProjectVisual project={project} />
+                )}
+
+                {project.layout === "split" && (
+                  <div className="relative grid gap-10 lg:grid-cols-12 lg:gap-14">
+                    <GhostIndex className="-top-[0.5em] left-[42%]">
+                      {project.index}
+                    </GhostIndex>
+                    <div className="lg:col-span-7">
+                      <ProjectMeta
+                        project={project}
+                        titleClassName="text-[clamp(1.9rem,4vw,3.2rem)] font-medium leading-tight tracking-[-0.02em]"
+                      />
                     </div>
-                    <div
-                      className={`lg:col-span-5 ${
-                        project.layout === "split-reverse"
-                          ? "lg:order-1 lg:col-start-1"
-                          : ""
-                      }`}
-                    >
+                    <div className="lg:col-span-4 lg:col-start-9 lg:mt-24">
+                      <ProjectVisual project={project} aspect="4 / 3.4" />
+                    </div>
+                  </div>
+                )}
+
+                {project.layout === "split-reverse" && (
+                  <div className="relative grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-14">
+                    <GhostIndex className="bottom-[-0.2em] right-[2%]">
+                      {project.index}
+                    </GhostIndex>
+                    {/* The visual field crosses the content grid to the left */}
+                    <div className="lg:col-span-8 lg:-ml-16 xl:-ml-24">
+                      <ProjectVisual project={project} aspect="16 / 9.5" />
+                    </div>
+                    <div className="lg:col-span-4">
                       <ProjectMeta project={project} />
                     </div>
                   </div>
