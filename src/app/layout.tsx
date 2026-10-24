@@ -5,6 +5,7 @@ import Runtime from "@/components/Runtime";
 import LensFilter from "@/components/LensFilter";
 import Cursor from "@/components/Cursor";
 import { site } from "@/content/content";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -79,6 +80,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <Cursor />
         <div aria-hidden className="grain" />
+        <SpeedInsights />
       </body>
     </html>
   );
